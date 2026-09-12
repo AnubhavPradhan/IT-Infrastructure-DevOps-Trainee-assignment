@@ -1,0 +1,81 @@
+services:
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-reverse-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - devops-network
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ./app
+    container_name: flask-app
+    expose:
+      - "5000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: devopsdb
+      DB_USER: devops
+      DB_PASSWORD: devopspass
+    depends_on:
+      - db
+    networks:
+      - devops-network
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_DATABASE: devopsdb
+      MYSQL_USER: devops
+      MYSQL_PASSWORD: devopspass
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - devops-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      - devops-network
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
+    expose:
+      - "9100"
+    networks:
+      - devops-network
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  prometheus-data:
+
+networks:
+  devops-network:
+    driver: bridge
