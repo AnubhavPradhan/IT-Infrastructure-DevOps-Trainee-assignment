@@ -79,7 +79,8 @@ window that this works:
 ssh -p 2222 trainee@<vm-ip>
 ```
 
-#### Troubleshooting: SSH still listening on port 22 after restart
+<details>
+<summary><strong>Troubleshooting: SSH still listening on port 22 after restart</strong></summary>
 
 If the login above fails with **"Connection refused"**, check what's
 actually listening:
@@ -101,6 +102,8 @@ sudo systemctl restart ssh.service
 sudo ss -tlnp | grep ssh    # should now show a new PID on 2222
 ```
 If the PID is unchanged, `sudo reboot` to force a clean state and re-check.
+
+</details>
 
 ### Step 2 — Install Docker
 ```bash
